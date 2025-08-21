@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  // valfritt: ta bort raden nedan om du hellre vill ha default output i node_modules
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  assets    Asset[]
+  campaigns Campaign[]
+}
+
+model Asset {
+  id        String   @id @default(uuid())
+  key       String   @unique   // S3-nyckel
+  mime      String
+  size      Int
+  createdAt DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  name      String
+  city      String
+  radiusKm  Int
+  budgetKr  Int
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}

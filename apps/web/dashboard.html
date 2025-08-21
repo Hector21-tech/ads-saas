@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <title>Ads SaaS – Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0b1020;--panel:#11172a;--muted:#6b7280;--text:#e5e7eb;
+      --brand:#06b6d4;--brand2:#7c3aed;--danger:#ef4444;--ok:#10b981;--border:#1f2a44
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(120deg,#0b1020,#0e1330 40%,#0b1020);color:var(--text);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{position:sticky;top:0;z-index:5;background:rgba(9,12,24,.7);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+    header .bar{max-width:1100px;margin:0 auto;padding:14px 24px;display:flex;gap:16px;align-items:center;justify-content:space-between}
+    .logo{font-weight:900;letter-spacing:.5px}
+    .logo b{background:linear-gradient(135deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid var(--border);background:#0e1530;color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn:hover{border-color:#2a3866}
+    .btn.primary{background:linear-gradient(135deg,#0ea5e9,#7c3aed);border:0}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;margin-top:20px}
+    .card{grid-column:span 12;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+    @media(min-width:860px){.span6{grid-column:span 6}.span4{grid-column:span 4}.span8{grid-column:span 8}}
+    h2{margin:0 0 10px;font-size:18px}
+    label{display:block;margin:8px 0 6px;color:#9ca3af}
+    input[type="text"],input[type="email"],input[type="number"],input[type="datetime-local"]{
+      width:100%;background:#0c132b;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px
+    }
+    .row{display:grid;gap:10px}@media(min-width:760px){.row.two{grid-template-columns:1fr 1fr}}
+    .muted{color:var(--muted)} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .list{margin:6px 0 0;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--border)}
+    .item:first-child{border-top:0}
+    .pill{border:1px solid #284a5a;background:#0b1f2b;color:#93c5fd;border-radius:999px;padding:4px 10px;font-size:12px}
+    .danger{background:#3a0f14;border-color:#6b1a1f;color:#fecaca}
+    .ok{background:#0c2a22;border-color:#1f5d4b;color:#bbf7d0}
+    .upload{border:2px dashed #274260;border-radius:12px;padding:22px;text-align:center;cursor:pointer}
+    .upload:hover{border-color:#3d6aa1}
+    .tag{font-size:12px;color:#93c5fd}
+    .toast{position:fixed;right:16px;top:16px;display:flex;flex-direction:column;gap:8px;z-index:50}
+    .toast .t{background:#0b152d;border:1px solid var(--border);padding:10px 14px;border-radius:10px}
+    .preview{max-height:70px;margin-top:6px;border-radius:6px;display:block}
+  </style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo">🚀 <b>Ads SaaS</b> • Dashboard</div>
+    <div class="nav">
+      <button class="btn" onclick="scrollToEl('#users')">Användare</button>
+      <button class="btn" onclick="scrollToEl('#assets')">Filer</button>
+      <button class="btn" onclick="scrollToEl('#campaigns')">Kampanjer</button>
+      <a class="btn primary" href="#" onclick="location.reload()">Uppdatera</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- Users -->
+    <section class="card span6" id="users">
+      <h2>Skapa användare</h2>
+      <p class="muted">POST <span class="mono">/users</span></p>
+      <div class="row">
+        <label>E-post</label>
+        <input id="userEmail" type="email" placeholder="din@mail.se" />
+        <label>Namn (valfritt)</label>
+        <input id="userName" type="text" placeholder="Ditt namn" />
+        <button class="btn primary" onclick="createUser()">Skapa användare</button>
+      </div>
+      <div style="margin-top:10px" class="muted">Aktiv användare: <span class="mono" id="currentUser">–</span></div>
+      <div id="userToasts" class="toast"></div>
+    </section>
+
+    <!-- Assets -->
+    <section class="card span6" id="assets">
+      <h2>Filer</h2>
+      <p class="muted">/upload-file, /assets, /assets/:id/url, DELETE /assets/:id</p>
+      <div class="upload" onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault()" ondrop="dropUpload(event)">
+        <div>📤 Dra in fil eller klicka för att välja</div>
+        <div class="muted" style="font-size:12px">Bilder & PDF funkar fint</div>
+        <input id="fileInput" type="file" style="display:none" onchange="pickedFile(event)"/>
+      </div>
+      <div class="list" id="assetList"></div>
+      <div id="assetToasts" class="toast"></div>
+    </section>
+
+    <!-- Campaigns -->
+    <section class="card span8" id="campaigns">
+      <h2>Skapa kampanj</h2>
+      <p class="muted">POST <span class="mono">/campaigns</span>, GET <span class="mono">/campaigns?userId=...</span></p>
+      <div class="row two">
+        <div>
+          <label>Användar-ID (UUID)</label>
+          <input id="campaignUserId" type="text" placeholder="ex. 7f6c... (från användare)" />
+        </div>
+        <div>
+          <label>Namn</label>
+          <input id="campaignName" type="text" placeholder="Öppningskampanj" />
+        </div>
+        <div>
+          <label>Stad</label>
+          <input id="campaignCity" type="text" placeholder="Umeå" />
+        </div>
+        <div>
+          <label>Radie (km)</label>
+          <input id="campaignRadius" type="number" placeholder="10" />
+        </div>
+        <div>
+          <label>Budget (SEK)</label>
+          <input id="campaignBudget" type="number" placeholder="1500" />
+        </div>
+        <div>
+          <label>Start</label>
+          <input id="campaignStart" type="datetime-local" />
+        </div>
+        <div>
+          <label>Slut</label>
+          <input id="campaignEnd" type="datetime-local" />
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn primary" onclick="createCampaign()">Skapa kampanj</button>
+        <button class="btn" onclick="loadCampaigns()">Visa kampanjer</button>
+      </div>
+      <div class="list" id="campaignList" style="margin-top:10px"></div>
+      <div id="campaignToasts" class="toast"></div>
+    </section>
+
+    <!-- DB ping -->
+    <section class="card span4">
+      <h2>Databasstatus</h2>
+      <p class="muted">GET <span class="mono">/</span></p>
+      <button class="btn" onclick="pingDb()">Testa DB</button>
+      <div id="dbStatus" class="muted" style="margin-top:10px">–</div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ===== KONFIG =====
+  const API_BASE = 'http://localhost:3000'; // ändra om ditt API körs på annan adress
+
+  // ===== Hjälpare =====
+  const $ = (sel) => document.querySelector(sel);
+  function toast(containerId, msg, kind='ok'){
+    const box = document.createElement('div');
+    box.className = 't';
+    box.textContent = msg;
+    if(kind==='ok'){ box.style.borderColor='#1f5d4b' }
+    if(kind==='err'){ box.style.borderColor='#6b1a1f' }
+    const wrap = document.getElementById(containerId);
+    wrap.appendChild(box);
+    setTimeout(()=> wrap.removeChild(box), 3000);
+  }
+  function scrollToEl(sel){ document.querySelector(sel)?.scrollIntoView({behavior:'smooth'}); }
+
+  // ===== Users =====
+  let currentUserId = null;
+  async function createUser(){
+    const email = $('#userEmail').value.trim();
+    const name = $('#userName').value.trim() || undefined;
+    if(!email){ toast('userToasts','Fyll i e-post','err'); return; }
+    try{
+      const res = await fetch(`${API_BASE}/users`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email,name})
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Kunde inte skapa användare');
+      currentUserId = data.id;
+      $('#currentUser').textContent = currentUserId;
+      $('#campaignUserId').value = currentUserId;
+      toast('userToasts','Användare skapad ✅','ok');
+      $('#userEmail').value=''; $('#userName').value='';
+    }catch(e){ toast('userToasts', e.message || 'Fel', 'err'); }
+  }
+
+  // ===== Assets =====
+  async function listAssets(){
+    const box = $('#assetList');
+    box.innerHTML = '<div class="item"><span class="muted">Laddar...</span></div>';
+    try{
+      const res = await fetch(`${API_BASE}/assets`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Kunde inte hämta assets');
+      if(!Array.isArray(data) || data.length===0){
+        box.innerHTML = '<div class="item"><span class="muted">Inga filer ännu.</span></div>';
+        return;
+      }
+      box.innerHTML = data.map(a => `
+        <div class="item">
+          <div>
+            <div class="mono">${a.key}</div>
+            <div class="muted" style="font-size:12px">
+              ${a.mime} • ${(a.size/1024).toFixed(1)} KB • ${new Date(a.createdAt).toLocaleString()}
+            </div>
+            ${a.mime?.startsWith("image/") ? `<img src="" data-id="${a.id}" class="preview"/>` : ""}
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="pill">${a.id.slice(0,8)}...</span>
+            <button class="btn" onclick="deleteAsset('${a.id}')">Radera</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Hämta presigned URL för varje bild
+      for(const img of box.querySelectorAll(".preview")){
+        const id = img.getAttribute("data-id");
+        try{
+          const r = await fetch(`${API_BASE}/assets/${id}/url`);
+          const d = await r.json();
+          if(r.ok && d.url) img.src = d.url;
+        }catch(e){ console.error("Preview fail", e); }
+      }
+    }catch(e){
+      box.innerHTML = `<div class="item"><span class="danger pill">${e.message || 'Fel'}</span></div>`;
+    }
+  }
+  async function deleteAsset(id){
+    if(!confirm('Radera filen?')) return;
+    try{
+      const res = await fetch(`${API_BASE}/assets/${id}`,{method:'DELETE'});
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Kunde inte radera');
+      toast('assetToasts','Filen raderad ✅','ok');
+      listAssets();
+    }catch(e){ toast('assetToasts', e.message || 'Fel', 'err'); }
+  }
+  function pickedFile(e){ if(e.target.files?.[0]) uploadFile(e.target.files[0]); }
+  function dropUpload(e){ e.preventDefault(); const f = e.dataTransfer.files?.[0]; if(f) uploadFile(f); }
+  async function uploadFile(file){
+    const fd = new FormData();
+    fd.append('file', file);
+    if(currentUserId) fd.append('userId', currentUserId);
+    try{
+      const res = await fetch(`${API_BASE}/upload-file`,{ method:'POST', body:fd });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Upload failed');
+      toast('assetToasts', `Uppladdad: ${data.key}`, 'ok');
+      listAssets();
+    }catch(e){ toast('assetToasts', e.message || 'Fel', 'err'); }
+  }
+
+  // ===== Campaigns =====
+  async function createCampaign(){
+    const userId = $('#campaignUserId').value.trim();
+    const name = $('#campaignName').value.trim();
+    const city = $('#campaignCity').value.trim();
+    const radiusKm = parseInt($('#campaignRadius').value,10);
+    const budgetKr = parseInt($('#campaignBudget').value,10);
+    const startDate = $('#campaignStart').value;
+    const endDate = $('#campaignEnd').value;
+    if(!userId || !name || !city || !radiusKm || !budgetKr || !startDate || !endDate){
+      toast('campaignToasts','Fyll i alla fält','err'); return;
+    }
+    try{
+      const res = await fetch(`${API_BASE}/campaigns`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          userId, name, city, radiusKm, budgetKr,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString()
+        })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Kunde inte skapa kampanj');
+      toast('campaignToasts','Kampanj skapad ✅','ok');
+      loadCampaigns();
+    }catch(e){ toast('campaignToasts', e.message || 'Fel', 'err'); }
+  }
+  async function loadCampaigns(){
+    const userId = $('#campaignUserId').value.trim();
+    const box = $('#campaignList');
+    if(!userId){ box.innerHTML = '<div class="item"><span class="muted">Ange userId först</span></div>'; return; }
+    box.innerHTML = '<div class="item"><span class="muted">Laddar...</span></div>';
+    try{
+      const res = await fetch(`${API_BASE}/campaigns?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Kunde inte hämta kampanjer');
+      if(!Array.isArray(data) || data.length===0){
+        box.innerHTML = '<div class="item"><span class="muted">Inga kampanjer ännu.</span></div>'; return;
+      }
+      box.innerHTML = data.map(c => `
+        <div class="item">
+          <div>
+            <div><b>${c.name}</b> <span class="tag">📍 ${c.city} • ${c.radiusKm} km</span></div>
+            <div class="muted" style="font-size:12px">💰 ${c.budgetKr.toLocaleString('sv-SE')} SEK •
+              ${new Date(c.startDate).toLocaleDateString('sv-SE')} – ${new Date(c.endDate).toLocaleDateString('sv-SE')}</div>
+          </div>
+          <span class="pill">${c.id.slice(0,8)}...</span>
+        </div>
+      `).join('');
+    }catch(e){ box.innerHTML = `<div class="item"><span class="danger pill">${e.message || 'Fel'}</span></div>`; }
+  }
+
+  // ===== DB Ping =====
+  async function pingDb(){
+    const el = $('#dbStatus');
+    el.textContent = 'Testar...';
+    try{
+      const res = await fetch(`${API_BASE}/`);
+      const data = await res.json();
+      el.textContent = `OK: ${data?.time?.now || JSON.stringify(data)}`;
+    }catch(e){ el.textContent = 'Fel: kunde inte nå API'; }
+  }
+
+  // Init
+  (function init(){ listAssets(); })();
+</script>
+</body>
+</html>
