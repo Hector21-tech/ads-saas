@@ -4,12 +4,18 @@
       "Bash(docker:*)",
       "Bash(cp:*)",
       "Bash(npm install)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(npx tsx:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "C:\\c\\Users\\bga23\\Desktop\\ads-saas\\apps"
+      "C:\\c\\Users\\bga23\\Desktop\\ads-saas\\apps",
+      "C:\\c\\Users\\bga23\\Desktop\\ads-saas"
     ]
   }
 }

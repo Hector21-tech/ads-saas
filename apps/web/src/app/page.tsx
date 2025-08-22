@@ -1,4 +1,35 @@
+'use client';
+
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import Link from 'next/link';
+
 export default function Home() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-orange mx-auto"></div>
+          <p className="mt-4 text-text-medium">Laddar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return null; // Will redirect to dashboard
+  }
+
   return (
     <>
       {/* Navigation */}
@@ -13,7 +44,7 @@ export default function Home() {
             <a href="#pricing" className="nav-link">Priser</a>
             <a href="#testimonials" className="nav-link">Recensioner</a>
             <a href="#contact" className="nav-link">Kontakt</a>
-            <button className="btn-primary">Kom igång</button>
+            <Link href="/login" className="btn-primary">Logga in</Link>
           </div>
           <div className="hamburger">
             <span></span>
@@ -40,10 +71,10 @@ export default function Home() {
               <h1>Enkla annonser för <span className="highlight gradient-text">hantverkare</span></h1>
               <p className="hero-subtitle">Slipp dyra reklambyråer! Skapa professionella annonser för Facebook, Google och Instagram på 5 minuter. <span className="highlight-text">Perfekt för snickare, elektriker, rörmokare och andra hantverkare.</span></p>
               <div className="hero-buttons">
-                <button className="btn-primary large pulse-button">
+                <Link href="/register" className="btn-primary large pulse-button">
                   <span className="button-text">Testa gratis i 14 dagar</span>
                   <span className="button-glow"></span>
-                </button>
+                </Link>
                 <button className="btn-secondary large">
                   <i className="fas fa-play"></i>
                   Se demo
@@ -384,7 +415,7 @@ export default function Home() {
             <h2>Redo att få fler kunder?</h2>
             <p>Gå med i hundratals hantverkare som redan använder AnnonsHjälpen för att växa sina företag</p>
             <div className="cta-buttons">
-              <button className="btn-primary large">Testa gratis i 14 dagar</button>
+              <Link href="/register" className="btn-primary large">Testa gratis i 14 dagar</Link>
               <p className="cta-note">Inget kreditkort krävs • Avsluta när du vill</p>
             </div>
           </div>

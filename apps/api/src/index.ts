@@ -3,8 +3,17 @@ import dotenv from "dotenv";
 import { Pool } from "pg";
 import multer from "multer";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { z } from "zod";
-import { prisma } from "./db";  // <- egen fil som du skapade (db.ts)
+import { prisma } from "./db";
+import { 
+  hashPassword, 
+  comparePassword, 
+  generateToken, 
+  authMiddleware, 
+  optionalAuthMiddleware
+} from "./auth";
+import type { AuthRequest } from "./auth";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
@@ -18,10 +27,14 @@ import {
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3010;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Initiera S3
 const s3 = new S3Client({
@@ -119,9 +132,124 @@ app.get("/", async (req, res) => {
   }
 });
 
+// === Auth endpoints ===
+
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().optional(),
+});
+
+app.post("/auth/register", async (req, res) => {
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(parsed.error.flatten());
+
+  try {
+    const { email, password, name } = parsed.data;
+    
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: "Email already exists" });
+    }
+
+    // Hash password and create user
+    const hashedPassword = await hashPassword(password);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || null,
+      },
+      select: { id: true, email: true, name: true, role: true, createdAt: true }
+    });
+
+    // Generate token
+    const token = generateToken(user);
+    
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.status(201).json({ user, token });
+  } catch (err: any) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+app.post("/auth/login", async (req, res) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(parsed.error.flatten());
+
+  try {
+    const { email, password } = parsed.data;
+
+    // Find user
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Verify password
+    const isValid = await comparePassword(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Generate token
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role
+    });
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        createdAt: user.createdAt
+      },
+      token
+    });
+  } catch (err: any) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+app.post("/auth/logout", (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: "Logged out successfully" });
+});
+
+app.get("/auth/me", authMiddleware, async (req: AuthRequest, res) => {
+  res.json({ user: req.user });
+});
+
 // === Prisma endpoints ===
 
-// Users
+// Users (deprecated - use auth endpoints instead)
 const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
@@ -141,9 +269,8 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// Campaigns
+// Campaigns (protected endpoints)
 const createCampaignSchema = z.object({
-  userId: z.string().uuid(),
   name: z.string().min(2),
   city: z.string().min(2),
   radiusKm: z.number().int().positive(),
@@ -152,14 +279,14 @@ const createCampaignSchema = z.object({
   endDate: z.string().datetime(),
 });
 
-app.post("/campaigns", async (req, res) => {
+app.post("/campaigns", authMiddleware, async (req: AuthRequest, res) => {
   const parsed = createCampaignSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
   try {
     const campaign = await prisma.campaign.create({
       data: {
-        userId: parsed.data.userId,
+        userId: req.user!.id,
         name: parsed.data.name,
         city: parsed.data.city,
         radiusKm: parsed.data.radiusKm,
@@ -167,6 +294,11 @@ app.post("/campaigns", async (req, res) => {
         startDate: new Date(parsed.data.startDate),
         endDate: new Date(parsed.data.endDate),
       },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true }
+        }
+      }
     });
     res.status(201).json(campaign);
   } catch (err) {
@@ -175,16 +307,45 @@ app.post("/campaigns", async (req, res) => {
   }
 });
 
-app.get("/campaigns", async (req, res) => {
-  const userId = String(req.query.userId || "");
-  if (!userId) return res.status(400).json({ error: "userId saknas" });
-
+app.get("/campaigns", authMiddleware, async (req: AuthRequest, res) => {
   try {
     const campaigns = await prisma.campaign.findMany({
-      where: { userId },
+      where: { userId: req.user!.id },
       orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { ads: true }
+        }
+      }
     });
     res.json(campaigns);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.get("/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const campaign = await prisma.campaign.findFirst({
+      where: { 
+        id: req.params.id,
+        userId: req.user!.id 
+      },
+      include: {
+        ads: true,
+        metrics: {
+          orderBy: { date: 'desc' },
+          take: 30
+        }
+      }
+    });
+    
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+    
+    res.json(campaign);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

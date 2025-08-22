@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "AnnonsHjälpen - Enkla annonser för hantverkare",
@@ -19,7 +20,9 @@ export default function RootLayout({
         <link rel="stylesheet" href="/style.css" />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <script src="/script.js"></script>
       </body>
     </html>

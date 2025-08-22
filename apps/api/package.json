@@ -13,18 +13,25 @@
     "@aws-sdk/client-s3": "^3.872.0",
     "@aws-sdk/s3-request-presigner": "^3.873.0",
     "@prisma/client": "^6.14.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.0",
     "express": "^4.19.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "pg": "^8.11.0",
-    "prisma": "^6.14.0",
     "zod": "^4.0.17"
   },
   "devDependencies": {
     "@types/multer": "^2.0.0",
     "@types/pg": "^8.15.5",
-    "tsx": "^4.7.0",
+    "prisma": "^6.14.0",
+    "tsx": "^4.20.4",
     "typescript": "^5.3.0"
   }
 }
