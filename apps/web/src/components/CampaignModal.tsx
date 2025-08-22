@@ -76,7 +76,7 @@ export default function CampaignModal({ isOpen, onClose, onSuccess }: CampaignMo
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 1001,
         padding: '20px'
       }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}

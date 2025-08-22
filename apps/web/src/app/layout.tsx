@@ -23,7 +23,6 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
-        <script src="/script.js"></script>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 # 📊 Daglig Status
 
-**Uppdaterad:** 2025-08-22 21:07
+**Uppdaterad:** 2025-08-22 21:10
 
 ## 🟢 Vad som fungerar just nu
 
@@ -13,6 +13,8 @@
   - Login-sida fungerar
   - Register-sida fungerar
   - AuthContext implementerat
+  - Dashboard header-problem fixat (fixed navbar med korrekt padding)
+  - "Skapa kampanj"-modal fungerar (z-index fixat)
   
 - **API Server** (port 3010): Körs och svarar
   - JWT autentisering implementerat

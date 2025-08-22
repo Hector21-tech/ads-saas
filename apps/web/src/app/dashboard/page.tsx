@@ -67,7 +67,14 @@ export default function Dashboard() {
     <ProtectedRoute>
       <div>
         {/* Navigation */}
-        <nav className="navbar" style={{ background: 'var(--bg-white)', borderBottom: '1px solid var(--border-light)' }}>
+        <nav className="navbar" style={{ 
+          background: 'var(--bg-white)', 
+          borderBottom: '1px solid var(--border-light)',
+          position: 'fixed',
+          top: 0,
+          width: '100%',
+          zIndex: 1000
+        }}>
           <div className="nav-container">
             <div className="logo">
               <i className="fas fa-hammer"></i>
@@ -96,7 +103,7 @@ export default function Dashboard() {
           </div>
         </nav>
 
-        <div className="container" style={{ padding: '48px 24px' }}>
+        <div className="container" style={{ padding: '128px 24px 48px' }}>
           {/* Header */}
           <div style={{ marginBottom: '48px' }}>
             <h1 style={{ fontSize: '36px', fontWeight: '700', color: 'var(--text-dark)', marginBottom: '8px' }}>
