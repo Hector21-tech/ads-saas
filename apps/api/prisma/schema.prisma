@@ -17,13 +17,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id        String    @id @default(uuid())
   email     String    @unique
   name      String?
+  password  String
+  role      UserRole  @default(USER)
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   assets    Asset[]
   campaigns Campaign[]
+  sessions  Session[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Asset {
@@ -36,15 +54,68 @@ model Asset {
   user      User?    @relation(fields: [userId], references: [id])
 }
 
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
 model Campaign {
-  id        String   @id @default(uuid())
+  id        String          @id @default(uuid())
   name      String
   city      String
   radiusKm  Int
   budgetKr  Int
   startDate DateTime
   endDate   DateTime
-  createdAt DateTime @default(now())
+  status    CampaignStatus  @default(DRAFT)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
+  ads       Ad[]
+  metrics   CampaignMetric[]
+}
+
+model Ad {
+  id         String   @id @default(uuid())
+  campaignId String
+  title      String
+  content    String
+  imageUrl   String?
+  platform   String   // Facebook, Google, Instagram, etc.
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  metrics    AdMetric[]
+}
+
+model CampaignMetric {
+  id           String   @id @default(uuid())
+  campaignId   String
+  date         DateTime
+  impressions  Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  cost         Float    @default(0)
+  createdAt    DateTime @default(now())
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+}
+
+model AdMetric {
+  id          String   @id @default(uuid())
+  adId        String
+  date        DateTime
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  conversions Int      @default(0)
+  cost        Float    @default(0)
+  createdAt   DateTime @default(now())
+  ad          Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@unique([adId, date])
 }
