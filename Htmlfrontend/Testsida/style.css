@@ -327,7 +327,45 @@ p {
 .nav-menu {
     display: flex;
     align-items: center;
-    gap: 2.5rem;
+    gap: 1.5rem;
+}
+
+.nav-menu .btn-primary,
+.nav-menu .btn-secondary {
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.nav-menu a.btn-secondary {
+    background: transparent;
+    color: var(--primary-orange);
+    border: 2px solid var(--primary-orange);
+    box-shadow: 0 4px 16px rgba(204, 120, 92, 0.1);
+}
+
+.nav-menu a.btn-secondary:hover {
+    background: var(--primary-orange);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px var(--shadow-medium);
+}
+
+.nav-menu a.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    box-shadow: 0 8px 32px var(--shadow-light);
+}
+
+.nav-menu a.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px var(--shadow-medium);
+    filter: brightness(1.05);
 }
 
 .nav-link {
@@ -382,7 +420,7 @@ p {
 
 /* Hero Section - Fixed */
 .hero {
-    padding: 120px 0 80px;
+    padding: 160px 0 80px; /* Increased top padding to account for fixed navbar */
     background: var(--gradient-hero);
     min-height: 100vh;
     display: flex;
@@ -688,6 +726,7 @@ p {
 /* Sections */
 .features, .how-it-works, .pricing, .testimonials {
     padding: 100px 0;
+    scroll-margin-top: 80px; /* Add scroll margin to account for fixed navbar */
 }
 
 .features {

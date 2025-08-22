@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import CampaignModal from '@/components/CampaignModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { campaignApi, Campaign } from '@/lib/api';
 
@@ -10,6 +11,7 @@ export default function Dashboard() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadCampaigns();
@@ -37,6 +39,28 @@ export default function Dashboard() {
       style: 'currency',
       currency: 'SEK'
     }).format(amount);
+  };
+
+  const handleStatusChange = async (campaignId: string, newStatus: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED') => {
+    try {
+      await campaignApi.updateStatus(campaignId, newStatus);
+      loadCampaigns(); // Refresh the campaigns
+    } catch (err) {
+      console.error('Error updating campaign status:', err);
+      alert('Kunde inte uppdatera kampanjstatus');
+    }
+  };
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    if (window.confirm('Är du säker på att du vill ta bort denna kampanj? Detta går inte att ångra.')) {
+      try {
+        await campaignApi.delete(campaignId);
+        loadCampaigns(); // Refresh the campaigns
+      } catch (err) {
+        console.error('Error deleting campaign:', err);
+        alert('Kunde inte ta bort kampanj');
+      }
+    }
   };
 
   return (
@@ -128,7 +152,11 @@ export default function Dashboard() {
               <h2 style={{ fontSize: '28px', fontWeight: '600', color: 'var(--text-dark)', margin: 0 }}>
                 Dina kampanjer
               </h2>
-              <button className="btn-primary" style={{ padding: '12px 24px' }}>
+              <button 
+                className="btn-primary" 
+                style={{ padding: '12px 24px' }}
+                onClick={() => setShowCreateModal(true)}
+              >
                 <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
                 Ny kampanj
               </button>
@@ -156,7 +184,10 @@ export default function Dashboard() {
                 <p style={{ color: 'var(--text-medium)', fontSize: '16px', marginBottom: '24px' }}>
                   Skapa din första kampanj för att komma igång!
                 </p>
-                <button className="btn-primary">
+                <button 
+                  className="btn-primary"
+                  onClick={() => setShowCreateModal(true)}
+                >
                   <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
                   Skapa första kampanjen
                 </button>
@@ -237,16 +268,41 @@ export default function Dashboard() {
                         Redigera
                       </button>
                       {campaign.status === 'ACTIVE' ? (
-                        <button className="btn-secondary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                        <button 
+                          className="btn-secondary" 
+                          style={{ padding: '8px 16px', fontSize: '14px' }}
+                          onClick={() => handleStatusChange(campaign.id, 'PAUSED')}
+                        >
                           <i className="fas fa-pause" style={{ marginRight: '6px' }}></i>
                           Pausa
                         </button>
+                      ) : campaign.status === 'PAUSED' ? (
+                        <button 
+                          className="btn-primary" 
+                          style={{ padding: '8px 16px', fontSize: '14px' }}
+                          onClick={() => handleStatusChange(campaign.id, 'ACTIVE')}
+                        >
+                          <i className="fas fa-play" style={{ marginRight: '6px' }}></i>
+                          Återuppta
+                        </button>
                       ) : (
-                        <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                        <button 
+                          className="btn-primary" 
+                          style={{ padding: '8px 16px', fontSize: '14px' }}
+                          onClick={() => handleStatusChange(campaign.id, 'ACTIVE')}
+                        >
                           <i className="fas fa-play" style={{ marginRight: '6px' }}></i>
                           Aktivera
                         </button>
                       )}
+                      <button 
+                        className="btn-secondary" 
+                        style={{ padding: '8px 16px', fontSize: '14px', color: '#dc2626', borderColor: '#dc2626' }}
+                        onClick={() => handleDeleteCampaign(campaign.id)}
+                      >
+                        <i className="fas fa-trash" style={{ marginRight: '6px' }}></i>
+                        Ta bort
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -254,6 +310,14 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        <CampaignModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            loadCampaigns(); // Refresh campaigns list
+          }}
+        />
       </div>
     </ProtectedRoute>
   );

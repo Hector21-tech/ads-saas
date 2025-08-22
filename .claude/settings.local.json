@@ -9,7 +9,12 @@
       "Bash(npm install:*)",
       "Bash(npm start)",
       "Bash(npx tsx:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(start index.html)",
+      "Bash(start http://localhost:3004)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": [],

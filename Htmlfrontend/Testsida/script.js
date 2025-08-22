@@ -70,7 +70,7 @@ function initSmoothScrolling() {
             const target = document.querySelector(this.getAttribute('href'));
             
             if (target) {
-                const headerOffset = 90;
+                const headerOffset = 100; // Increased offset to better account for navbar
                 const elementPosition = target.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -349,6 +349,271 @@ function initModalSystem() {
 }
 
 // Enhanced modal functions
+function showLoginModal() {
+    const modal = createModal(`
+        <div class="modal-content premium-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-in-alt"></i> Logga in</h3>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form class="login-form premium-form">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> E-post *</label>
+                    <input type="email" placeholder="din@email.se" required>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Lösenord *</label>
+                    <input type="password" placeholder="Ditt lösenord" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox"> Kom ihåg mig
+                    </label>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary full-width">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Logga in
+                    </button>
+                </div>
+                
+                <div class="form-footer">
+                    <p><a href="#" onclick="closeModal(); showPasswordResetModal();">Glömt lösenord?</a></p>
+                    <p>Inget konto än? <a href="#" onclick="closeModal(); showSignupModal();">Skapa konto här</a></p>
+                </div>
+            </form>
+        </div>
+    `);
+    
+    const form = modal.querySelector('.login-form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        showSuccessMessage('🎉 Välkommen tillbaka! Du är nu inloggad.');
+    });
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function showPasswordResetModal() {
+    const modal = createModal(`
+        <div class="modal-content premium-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Återställ lösenord</h3>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="reset-intro">
+                <p>Ange din e-postadress så skickar vi dig en länk för att återställa ditt lösenord.</p>
+            </div>
+            
+            <form class="reset-form premium-form">
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> E-post *</label>
+                    <input type="email" placeholder="din@email.se" required>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary full-width">
+                        <i class="fas fa-paper-plane"></i>
+                        Skicka återställningslänk
+                    </button>
+                    <button type="button" class="btn-secondary full-width" onclick="closeModal(); showLoginModal();">
+                        Tillbaka till inloggning
+                    </button>
+                </div>
+            </form>
+        </div>
+    `);
+    
+    const form = modal.querySelector('.reset-form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        showSuccessMessage('📧 Vi har skickat en återställningslänk till din e-post!');
+    });
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function showNewCampaignModal() {
+    const modal = createModal(`
+        <div class="modal-content premium-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle"></i> Skapa ny kampanj</h3>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="campaign-progress">
+                <div class="progress-step active">
+                    <span>1</span>
+                    <label>Kampanjtyp</label>
+                </div>
+                <div class="progress-step">
+                    <span>2</span>
+                    <label>Målgrupp</label>
+                </div>
+                <div class="progress-step">
+                    <span>3</span>
+                    <label>Budget</label>
+                </div>
+                <div class="progress-step">
+                    <span>4</span>
+                    <label>Publicera</label>
+                </div>
+            </div>
+            
+            <form class="campaign-form premium-form">
+                <div class="form-step active" data-step="1">
+                    <div class="form-group">
+                        <label><i class="fas fa-bullhorn"></i> Vad vill du marknadsföra? *</label>
+                        <select required>
+                            <option value="">Välj kampanjtyp</option>
+                            <option value="tjänst">🔨 Specifik tjänst (t.ex. köksmontage)</option>
+                            <option value="område">📍 Företaget i ett område</option>
+                            <option value="säsong">🌟 Säsongserbjudande</option>
+                            <option value="akut">⚡ Akuttjänster</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Kampanjnamn *</label>
+                        <input type="text" placeholder="t.ex. Köksmontage Stockholm Vinter 2024" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-clipboard-list"></i> Kort beskrivning</label>
+                        <textarea rows="3" placeholder="Beskriv vad du erbjuder och vad som gör dig unik..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-step" data-step="2">
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Var vill du nå kunder? *</label>
+                        <input type="text" placeholder="t.ex. Stockholm, 10km radie" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-venus-mars"></i> Kön</label>
+                            <select>
+                                <option value="">Alla</option>
+                                <option value="män">Män</option>
+                                <option value="kvinnor">Kvinnor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-birthday-cake"></i> Ålder</label>
+                            <select>
+                                <option value="">Alla åldrar</option>
+                                <option value="18-35">18-35 år</option>
+                                <option value="35-50">35-50 år</option>
+                                <option value="50+">50+ år</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-home"></i> Intressen</label>
+                        <div class="interest-tags">
+                            <label class="tag-option"><input type="checkbox" value="hem"> Hem & trädgård</label>
+                            <label class="tag-option"><input type="checkbox" value="renovering"> Renovering</label>
+                            <label class="tag-option"><input type="checkbox" value="bygg"> Byggprojekt</label>
+                            <label class="tag-option"><input type="checkbox" value="underhåll"> Hemunderhåll</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-step" data-step="3">
+                    <div class="budget-info">
+                        <h4><i class="fas fa-calculator"></i> Kampanjbudget</h4>
+                        <p>Rekommenderad startbudget: <strong>2000-5000 kr/månad</strong></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-coins"></i> Månadsbudget *</label>
+                        <select required>
+                            <option value="">Välj budget</option>
+                            <option value="1000">1 000 kr/månad - Testbudget</option>
+                            <option value="2500">2 500 kr/månad - Rekommenderat</option>
+                            <option value="5000">5 000 kr/månad - Aggressiv tillväxt</option>
+                            <option value="10000">10 000+ kr/månad - Företagsbudget</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fas fa-calendar-alt"></i> Kampanjlängd</label>
+                        <select>
+                            <option value="kontinuerlig">Kontinuerlig (rekommenderat)</option>
+                            <option value="1månad">1 månad</option>
+                            <option value="3månader">3 månader</option>
+                            <option value="6månader">6 månader</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-step" data-step="4">
+                    <div class="campaign-summary">
+                        <h4><i class="fas fa-eye"></i> Förhandsvisning</h4>
+                        <div class="preview-ad">
+                            <div class="ad-preview">
+                                <h5>Din annons kommer att se ut ungefär så här:</h5>
+                                <div class="mock-ad">
+                                    <div class="ad-header">
+                                        <span class="business-name">[Ditt företagsnamn]</span>
+                                        <span class="ad-label">Sponsrad</span>
+                                    </div>
+                                    <div class="ad-content">
+                                        <p><strong>Behöver du professionell hjälp?</strong></p>
+                                        <p>Vi hjälper dig med [din tjänst] i [ditt område]. Kontakta oss för en kostnadsfri offert!</p>
+                                    </div>
+                                    <div class="ad-footer">
+                                        <button class="ad-cta">Kontakta oss</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary prev-btn" onclick="previousCampaignStep()" style="display: none;">
+                        <i class="fas fa-arrow-left"></i>
+                        Tillbaka
+                    </button>
+                    <button type="button" class="btn-primary next-btn" onclick="nextCampaignStep()">
+                        Nästa
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn-primary submit-btn" style="display: none;">
+                        <i class="fas fa-rocket"></i>
+                        Skapa kampanj
+                    </button>
+                </div>
+            </form>
+        </div>
+    `);
+    
+    const form = modal.querySelector('.campaign-form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        showSuccessMessage('🎉 Din kampanj har skapats! Den kommer att granskas och aktiveras inom 24 timmar.');
+    });
+    
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
 function showDemoModal() {
     const modal = createModal(`
         <div class="modal-content premium-modal">
@@ -622,6 +887,7 @@ function showContactModal(plan = 'Enterprise') {
 
 // Multi-step form functionality
 let currentStep = 1;
+let currentCampaignStep = 1;
 
 function nextStep() {
     const currentStepEl = document.querySelector(`.form-step[data-step="${currentStep}"]`);
@@ -704,6 +970,88 @@ function previousStep() {
     }
 }
 
+// Campaign form step functions
+function nextCampaignStep() {
+    const currentStepEl = document.querySelector(`.form-step[data-step="${currentCampaignStep}"]`);
+    const progressStep = document.querySelector(`.campaign-progress .progress-step:nth-child(${currentCampaignStep})`);
+    
+    // Validate current step
+    const requiredFields = currentStepEl.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.style.borderColor = '#ff6b6b';
+            setTimeout(() => {
+                field.style.borderColor = '';
+            }, 2000);
+        }
+    });
+    
+    if (!isValid) {
+        // Shake animation for invalid form
+        currentStepEl.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+            currentStepEl.style.animation = '';
+        }, 500);
+        return;
+    }
+    
+    if (currentCampaignStep < 4) {
+        // Hide current step
+        currentStepEl.classList.remove('active');
+        progressStep.classList.add('completed');
+        
+        currentCampaignStep++;
+        
+        // Show next step
+        const nextStepEl = document.querySelector(`.form-step[data-step="${currentCampaignStep}"]`);
+        const nextProgressStep = document.querySelector(`.campaign-progress .progress-step:nth-child(${currentCampaignStep})`);
+        
+        setTimeout(() => {
+            nextStepEl.classList.add('active');
+            nextProgressStep.classList.add('active');
+        }, 300);
+        
+        // Update buttons
+        document.querySelector('.prev-btn').style.display = 'block';
+        
+        if (currentCampaignStep === 4) {
+            document.querySelector('.next-btn').style.display = 'none';
+            document.querySelector('.submit-btn').style.display = 'block';
+        }
+    }
+}
+
+function previousCampaignStep() {
+    if (currentCampaignStep > 1) {
+        const currentStepEl = document.querySelector(`.form-step[data-step="${currentCampaignStep}"]`);
+        const progressStep = document.querySelector(`.campaign-progress .progress-step:nth-child(${currentCampaignStep})`);
+        
+        currentStepEl.classList.remove('active');
+        progressStep.classList.remove('active');
+        
+        currentCampaignStep--;
+        
+        const prevStepEl = document.querySelector(`.form-step[data-step="${currentCampaignStep}"]`);
+        const prevProgressStep = document.querySelector(`.campaign-progress .progress-step:nth-child(${currentCampaignStep})`);
+        
+        setTimeout(() => {
+            prevStepEl.classList.add('active');
+            prevProgressStep.classList.remove('completed');
+        }, 300);
+        
+        // Update buttons
+        if (currentCampaignStep === 1) {
+            document.querySelector('.prev-btn').style.display = 'none';
+        }
+        
+        document.querySelector('.next-btn').style.display = 'block';
+        document.querySelector('.submit-btn').style.display = 'none';
+    }
+}
+
 function createModal(content) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
@@ -735,8 +1083,9 @@ function closeModal() {
         }, 300);
     });
     
-    // Reset form step
+    // Reset form steps
     currentStep = 1;
+    currentCampaignStep = 1;
 }
 
 function showSuccessMessage(message = 'Tack för din registrering! Vi skickar instruktioner till din e-post inom några minuter.') {
@@ -1145,6 +1494,196 @@ const dynamicStyles = `
         margin: 0;
         color: var(--text-medium);
         text-align: center;
+    }
+    
+    /* Login Modal Styles */
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+    
+    .form-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-light);
+    }
+    
+    .form-footer p {
+        margin-bottom: 0.5rem;
+        color: var(--text-medium);
+        font-size: 0.95rem;
+    }
+    
+    .form-footer a {
+        color: var(--primary-orange);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+    
+    .form-footer a:hover {
+        color: var(--primary-dark);
+    }
+    
+    .reset-intro {
+        padding: 1rem 2rem;
+        background: var(--bg-cream);
+        margin: 0 2rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .reset-intro p {
+        margin: 0;
+        color: var(--text-medium);
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    /* Campaign Modal Styles */
+    .campaign-progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .campaign-progress::before {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background: var(--border-light);
+        z-index: 1;
+    }
+    
+    .interest-tags {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+    }
+    
+    .tag-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--bg-cream);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .tag-option:hover {
+        background: var(--accent-beige);
+    }
+    
+    .tag-option input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+    }
+    
+    .budget-info {
+        background: var(--accent-beige);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .budget-info h4 {
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+    
+    .budget-info p {
+        margin: 0;
+        color: var(--text-medium);
+    }
+    
+    .campaign-summary {
+        text-align: center;
+    }
+    
+    .preview-ad {
+        background: var(--bg-cream);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-top: 1rem;
+    }
+    
+    .ad-preview h5 {
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+        font-weight: 600;
+    }
+    
+    .mock-ad {
+        background: white;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: left;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+    
+    .ad-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .business-name {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    
+    .ad-label {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .ad-content p {
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+    
+    .ad-footer {
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-light);
+    }
+    
+    .ad-cta {
+        background: var(--primary-orange);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
     }
     
     /* Success Modal */

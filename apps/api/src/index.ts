@@ -30,7 +30,7 @@ const app = express();
 const port = process.env.PORT || 3010;
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3004',
   credentials: true
 }));
 app.use(express.json());
@@ -346,6 +346,84 @@ app.get("/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
     }
     
     res.json(campaign);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+const updateCampaignSchema = z.object({
+  name: z.string().min(2).optional(),
+  city: z.string().min(2).optional(),
+  radiusKm: z.number().int().positive().optional(),
+  budgetKr: z.number().int().positive().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  status: z.enum(['DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED']).optional(),
+});
+
+app.put("/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
+  const parsed = updateCampaignSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(parsed.error.flatten());
+
+  try {
+    const existingCampaign = await prisma.campaign.findFirst({
+      where: { 
+        id: req.params.id,
+        userId: req.user!.id 
+      }
+    });
+
+    if (!existingCampaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    const updateData: any = { ...parsed.data };
+    if (updateData.startDate) {
+      updateData.startDate = new Date(updateData.startDate);
+    }
+    if (updateData.endDate) {
+      updateData.endDate = new Date(updateData.endDate);
+    }
+
+    const updatedCampaign = await prisma.campaign.update({
+      where: { id: req.params.id },
+      data: updateData,
+      include: {
+        user: {
+          select: { id: true, email: true, name: true }
+        },
+        _count: {
+          select: { ads: true }
+        }
+      }
+    });
+
+    res.json(updatedCampaign);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.delete("/campaigns/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const existingCampaign = await prisma.campaign.findFirst({
+      where: { 
+        id: req.params.id,
+        userId: req.user!.id 
+      }
+    });
+
+    if (!existingCampaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+
+    await prisma.campaign.delete({
+      where: { id: req.params.id }
+    });
+
+    res.json({ message: "Campaign deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

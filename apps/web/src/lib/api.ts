@@ -97,4 +97,27 @@ export const campaignApi = {
     const response = await api.get(`/campaigns/${id}`);
     return response.data;
   },
+
+  update: async (id: string, data: Partial<{
+    name: string;
+    city: string;
+    radiusKm: number;
+    budgetKr: number;
+    startDate: string;
+    endDate: string;
+    status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
+  }>) => {
+    const response = await api.put(`/campaigns/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: string) => {
+    const response = await api.delete(`/campaigns/${id}`);
+    return response.data;
+  },
+
+  updateStatus: async (id: string, status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED') => {
+    const response = await api.put(`/campaigns/${id}`, { status });
+    return response.data;
+  },
 };
